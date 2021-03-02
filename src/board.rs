@@ -36,14 +36,14 @@ pub type Board = HashMap<Position, Piece>;
 #[derive(Clone)]
 pub struct State {
     pub pieces: Board,
-    color: Color,
+    pub color: Color,
 }
 
 #[allow(dead_code)]
 pub enum Move {
-    Enemy,
-    NotTake,
     Take,
+    Go,
+    Stop,
 }
 
 pub fn new_state() -> State {
@@ -63,67 +63,125 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
         Type::Pawn => get_pawn_moves(&s, &p),
         Type::Rook => get_rook_moves(&s, &p),
     };
-    return get_filterd_moves(all_possible_moves);
+    return all_possible_moves;
 }
 
 /// generujemu pozycje z danego miejsca na pustje szachownicy
 
-fn get_rook_moves(s: &State, p: &Position) -> Vec<(Move, Position)> {
-    let mut res: Vec<(Move, Position)> = vec![];
-    for i in 1..8 {
-        res.push((check_rook_position(&s, &p), (p.0, (p.1 + i) % 8)));
-        res.push((check_rook_position(&s, &p), ((p.0 + i) % 8, p.1)));
+fn get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
+    let mut res: Vec<Position> = vec![];
+
+    for i in (p.0 + 1)..8 {
+        let new_pos = (i, p.1);
+        assert!(new_pos != *p);
+        match check_rook_position(s, &new_pos) {
+            Move::Take => {
+                res.push(new_pos);
+                break;
+            }
+            Move::Go => {
+                res.push(new_pos);
+            }
+            Move::Stop => {
+                break;
+            }
+        }
     }
+
+    for i in 1..(p.0 + 1) {
+        let new_pos = ((p.0 - i), p.1);
+        assert!(new_pos != *p);
+        match check_rook_position(s, &new_pos) {
+            Move::Take => {
+                res.push(new_pos);
+                break;
+            }
+            Move::Go => {
+                res.push(new_pos);
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+    }
+
+    for i in (p.1 + 1)..8 {
+        let new_pos = (p.0, i);
+        assert!(new_pos != *p);
+        match check_rook_position(s, &new_pos) {
+            Move::Take => {
+                res.push(new_pos);
+                break;
+            }
+            Move::Go => {
+                res.push(new_pos);
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+    }
+
+    for i in 1..(p.1 + 1) {
+        let new_pos = (p.0, p.1 - i);
+        assert!(new_pos != *p);
+        match check_rook_position(s, &new_pos) {
+            Move::Take => {
+                res.push(new_pos);
+                break;
+            }
+            Move::Go => {
+                res.push(new_pos);
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+    }
+
     return res;
 }
 
 pub fn get_all_moves_for_collor(s: &State) -> Vec<(Position, Position)> {
     let mut res: Vec<(Position, Position)> = vec![];
     for (position, piece) in s.pieces.iter() {
-        if (s.color == piece.color) {
+        if s.color == piece.color {
             for to in get_piece_moves(&piece, &s, &position) {
                 res.push((*position, to));
             }
         }
     }
-    println!("aval moves: {:?}", res);
+    //println!("aval moves: {:?}", res);
     return res;
 }
 
 /// __nie gotowe koniecznie zmienic__  sprawdzamy czy pole jest puste czy stoi na nim nasz pion czy pion przeciwnika
-fn get_pawn_moves(_b: &State, p: &Position) -> Vec<(Move, Position)> {
+fn get_pawn_moves(b: &State, p: &Position) -> Vec<Position> {
     // TODO how fast is it?
     // FIXME brakuje podwojnych ruchow i bicia
-    return vec![(Move::Take, (p.0, p.1 + 1)), (Move::Take, (p.0, p.1 + 2))];
+    match b.pieces[p].color {
+        Color::Black => match p.1 {
+            0 => vec![],
+            1 => vec![(p.0, p.1 - 1)],
+            _ => vec![(p.0, p.1 - 1), (p.0, p.1 - 2)],
+        },
+        Color::White => match p.1 {
+            7 => vec![],
+            6 => vec![(p.0, p.1 + 1)],
+            _ => vec![(p.0, p.1 + 1), (p.0, p.1 + 2)],
+        },
+    }
 }
 
 /// sprawdzamy czy pole jest puste czy stoi na nim nasz pion czy pion przeciwnika
 fn check_rook_position(s: &State, p: &Position) -> Move {
     match s.pieces.get(&p) {
         Some(piece) => match piece.color == s.color {
-            true => Move::NotTake,
-            false => Move::Enemy,
+            true => Move::Stop,
+            false => Move::Take,
         },
-        None => Move::Take,
+        None => Move::Go,
     }
-}
-
-/// Majac `Vec<(Move,Position)>` filtrujemy go i zostawiamy tylko pozycje na ktore mozemy przejsc
-fn get_filterd_moves(moves: Vec<(Move, Position)>) -> Vec<Position> {
-    let mut res: Vec<Position> = vec![];
-    for (possible_move, position) in moves {
-        match possible_move {
-            Move::Take => {
-                res.push(position);
-            }
-            Move::Enemy => {
-                res.push(position);
-                break;
-            }
-            Move::NotTake => break,
-        }
-    }
-    return res;
 }
 
 /// zwraca obecna ocene szachownicy gdzie czarne pionki maja wartosci ujemne a biale dodatnie
@@ -133,7 +191,7 @@ pub fn get_evaluation(s: &State) -> i32 {
     for piece in s.pieces.values() {
         res = res + get_piece_value(piece);
     }
-    println!("oceniam na: {}", res);
+    //println!("oceniam na: {}", res);
     return res;
 }
 
@@ -154,6 +212,10 @@ fn get_piece_value(piece: &Piece) -> i32 {
 /// Wstawia na podana pozycje `to` element z pozycji `from` jezeli
 /// pod `from` nie ma nic __panics__
 pub fn make_move(s: &State, from: Position, to: Position) -> State {
+    let (x, y) = to;
+    if x > 7 || y > 7 {
+        assert!(false);
+    }
     let mut new_state = s.clone();
     new_state.color = !new_state.color;
     let insert = new_state.pieces.remove(&from).unwrap();
@@ -177,12 +239,12 @@ pub fn show_state(s: &State) {
             match s.pieces.get(&(x, y)) {
                 Some(piece) => match piece.color {
                     Color::Black => match piece.rodzaj {
-                        Type::Pawn => print!("♟︎"),
-                        Type::Rook => print!("♜"),
-                    },
-                    Color::White => match piece.rodzaj {
                         Type::Pawn => print!("♙"),
                         Type::Rook => print!("♖"),
+                    },
+                    Color::White => match piece.rodzaj {
+                        Type::Pawn => print!("♟︎"),
+                        Type::Rook => print!("♜"),
                     },
                 },
                 None => print!("_"),

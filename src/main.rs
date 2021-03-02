@@ -13,7 +13,7 @@ fn main() {
     board = board::set(
         board::new_piece(board::Type::Pawn, board::Color::White),
         board,
-        (0, 1),
+        (0, 2),
     );
     board = board::set(
         board::new_piece(board::Type::Pawn, board::Color::Black),
@@ -23,14 +23,26 @@ fn main() {
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::Black),
         board,
-        (7, 7),
+        (0, 1),
     );
-    let result = alpha_beta(&board, 10, MINUS_INF, PLUS_INF, board::Color::White);
+    let result = alpha_beta(&board, 2, MINUS_INF, PLUS_INF, board::Color::White);
     board::show_state(&board);
     board = board::make_move(&board,(0,0),(3,3));
     board::show_state(&board);
     println!("Alpha Beta: {}", result);
 }
+
+fn _main(){
+    let mut board = board::new_state();
+    board = board::set(
+        board::new_piece(board::Type::Rook, board::Color::White),
+        board,
+        (0, 1),
+    );
+    let res = board::get_all_moves_for_collor(&board);
+    println!("Aval moves: {:?} count: {}", res, res.len());
+}
+
 
 fn max(a: i32, b: i32) -> i32 {
     if a > b {
