@@ -1,5 +1,7 @@
 mod board;
 
+use rayon::prelude::*;
+
 static MINUS_INF: i32 = i32::MIN;
 static PLUS_INF: i32 = i32::MAX;
 
@@ -7,42 +9,42 @@ fn main() {
     let mut board = board::new_state();
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::White),
-        board,
+        &board,
         (0, 0),
     );
     board = board::set(
         board::new_piece(board::Type::Pawn, board::Color::White),
-        board,
+        &board,
         (0, 2),
     );
     board = board::set(
         board::new_piece(board::Type::Pawn, board::Color::Black),
-        board,
+        &board,
         (7, 6),
     );
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::Black),
-        board,
+        &board,
         (0, 1),
     );
-    let result = alpha_beta(&board, 2, MINUS_INF, PLUS_INF, board::Color::White);
+    let result = alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White);
     board::show_state(&board);
-    board = board::make_move(&board,(0,0),(3,3));
+    board = board::make_move(&board, (0, 0), (3, 3));
     board::show_state(&board);
     println!("Alpha Beta: {}", result);
+    pick_move(&board);
 }
 
-fn _main(){
+fn _main() {
     let mut board = board::new_state();
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::White),
-        board,
+        &board,
         (0, 1),
     );
     let res = board::get_all_moves_for_collor(&board);
     println!("Aval moves: {:?} count: {}", res, res.len());
 }
-
 
 fn max(a: i32, b: i32) -> i32 {
     if a > b {
@@ -58,6 +60,30 @@ fn min(a: i32, b: i32) -> i32 {
     } else {
         b
     }
+}
+
+fn pick_move(state: &board::State) {
+    let depth = 10;
+    let moves = board::get_all_moves_for_collor(state);
+    let mut moves_with_scores = vec![];
+    let mut i = 0;
+    while i < moves.len() {
+        moves_with_scores.push((0, moves[i]));
+        i += 1;
+    }
+    moves_with_scores
+        .par_iter_mut()
+        .for_each(|(score, (from, to))| {
+            *score = alpha_beta(
+                &board::make_move(state, *from, *to),
+                depth,
+                MINUS_INF,
+                PLUS_INF,
+                state.color,
+            );
+            println!("Score: {}", score);
+        });
+    println!("Scores after {:?}", moves_with_scores);
 }
 
 fn alpha_beta(

@@ -57,7 +57,7 @@ pub fn new_piece(rodzaj: Type, color: Color) -> Piece {
     return Piece { color, rodzaj };
 }
 
-/// generujemy pozycje z danego miejsca na pustje szachownicy
+/// w zaleznosci jaki pion stoi na danym miejscu ta funkcje generujemy
 fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
     let all_possible_moves = match piece.rodzaj {
         Type::Pawn => get_pawn_moves(&s, &p),
@@ -66,8 +66,7 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
     return all_possible_moves;
 }
 
-/// generujemu pozycje z danego miejsca na pustje szachownicy
-
+/// Zwracamy wszystkie ruchy wierzy z danego miejsca
 fn get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
     let mut res: Vec<Position> = vec![];
 
@@ -145,6 +144,7 @@ fn get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
 pub fn get_all_moves_for_collor(s: &State) -> Vec<(Position, Position)> {
     let mut res: Vec<(Position, Position)> = vec![];
     for (position, piece) in s.pieces.iter() {
+        // FIXME: tutaj robimy duzo prownan there must be a better way
         if s.color == piece.color {
             for to in get_piece_moves(&piece, &s, &position) {
                 res.push((*position, to));
@@ -224,7 +224,7 @@ pub fn make_move(s: &State, from: Position, to: Position) -> State {
 }
 
 /// Wstawia na podana pozycje `piece`
-pub fn set(i: Piece, s: State, to: Position) -> State {
+pub fn set(i: Piece, s: &State, to: Position) -> State {
     let mut new_state = s.clone();
     new_state.pieces.insert(to, i);
     return new_state;
