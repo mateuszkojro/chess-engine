@@ -5,7 +5,7 @@ use rayon::prelude::*;
 static MINUS_INF: i32 = i32::MIN;
 static PLUS_INF: i32 = i32::MAX;
 
-fn main() {
+fn __main() {
     let mut board = board::new_state();
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::White),
@@ -46,6 +46,39 @@ fn _main() {
     println!("Aval moves: {:?} count: {}", res, res.len());
 }
 
+fn main() {
+    let mut board = board::new_state();
+    board = board::set(
+        board::new_piece(board::Type::Rook, board::Color::White),
+        &board,
+        (0, 0),
+    );
+    board = board::set(
+        board::new_piece(board::Type::Pawn, board::Color::White),
+        &board,
+        (0, 1),
+    );
+    board = board::set(
+        board::new_piece(board::Type::Pawn, board::Color::Black),
+        &board,
+        (7, 6),
+    );
+    board = board::set(
+        board::new_piece(board::Type::Rook, board::Color::Black),
+        &board,
+        (7, 0),
+    );
+    let n = 10;
+    board::show_state(&board);
+    // make n moves
+    for _ in 0..n {
+        let (_, (from, to)) = pick_move(&board);
+        board::show_move(&board, from, to);
+        board = board::make_move(&board, from, to);
+        //board::show_state(&board);
+    }
+}
+
 fn max(a: i32, b: i32) -> i32 {
     if a > b {
         a
@@ -62,17 +95,18 @@ fn min(a: i32, b: i32) -> i32 {
     }
 }
 
-fn pick_move(state: &board::State) {
-    let depth = 10;
+fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) {
+    let depth = 5;
     let moves = board::get_all_moves_for_collor(state);
     let mut moves_with_scores = vec![];
     let mut i = 0;
     while i < moves.len() {
-        moves_with_scores.push((0, moves[i]));
+        moves_with_scores.push((0 as i32, moves[i]));
         i += 1;
     }
     moves_with_scores
-        .par_iter_mut()
+        //.par_iter_mut()
+        .iter_mut()
         .for_each(|(score, (from, to))| {
             *score = alpha_beta(
                 &board::make_move(state, *from, *to),
@@ -81,9 +115,26 @@ fn pick_move(state: &board::State) {
                 PLUS_INF,
                 state.color,
             );
-            println!("Score: {}", score);
         });
-    println!("Scores after {:?}", moves_with_scores);
+    println!("Moves: {:?}", moves_with_scores);
+    match state.color {
+        board::Color::Black => {
+            return *moves_with_scores
+                .iter()
+                .max_by_key(|(score, _)| {
+                    return score;
+                })
+                .unwrap();
+        }
+        board::Color::White => {
+            return *moves_with_scores
+                .iter()
+                .min_by_key(|(score, _)| {
+                    return score;
+                })
+                .unwrap();
+        }
+    }
 }
 
 fn alpha_beta(
