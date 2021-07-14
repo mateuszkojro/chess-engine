@@ -59,11 +59,10 @@ pub fn new_piece(rodzaj: Type, color: Color) -> Piece {
 
 /// w zaleznosci jaki pion stoi na danym miejscu ta funkcje generujemy
 fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
-    let all_possible_moves = match piece.rodzaj {
+    match piece.rodzaj {
         Type::Pawn => get_pawn_moves(&s, &p),
         Type::Rook => get_rook_moves(&s, &p),
-    };
-    all_possible_moves
+    }
 }
 
 /// Zwracamy wszystkie ruchy wierzy z danego miejsca
@@ -138,7 +137,7 @@ fn get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
         }
     }
 
-    return res;
+    res
 }
 
 pub fn get_all_moves_for_collor(s: &State) -> Vec<(Position, Position)> {
@@ -152,7 +151,7 @@ pub fn get_all_moves_for_collor(s: &State) -> Vec<(Position, Position)> {
         }
     }
     //println!("aval moves: {:?}", res);
-    return res;
+    res
 }
 
 /// __nie gotowe koniecznie zmienic__  sprawdzamy czy pole jest puste czy stoi na nim nasz pion czy pion przeciwnika
@@ -189,10 +188,10 @@ pub fn get_evaluation(s: &State) -> i32 {
     //Maybe done this way s.pieces.into_values().fold()
     let mut res = 0;
     for piece in s.pieces.values() {
-        res = res + get_piece_value(piece);
+        res += get_piece_value(piece);
     }
     //println!("oceniam na: {}", res);
-    return res;
+    res
 }
 
 /// Zwraca wartosc danego `Piece`
@@ -220,14 +219,14 @@ pub fn make_move(s: &State, from: Position, to: Position) -> State {
     new_state.color = !new_state.color;
     let insert = new_state.pieces.remove(&from).unwrap();
     new_state.pieces.insert(to, insert);
-    new_state;
+    new_state
 }
 
 /// Wstawia na podana pozycje `piece`
 pub fn set(i: Piece, s: &State, to: Position) -> State {
     let mut new_state = s.clone();
     new_state.pieces.insert(to, i);
-    return new_state;
+    new_state
 }
 
 /// Pokaz aktualny `state`

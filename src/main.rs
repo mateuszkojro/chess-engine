@@ -101,7 +101,7 @@ fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) 
     let mut moves_with_scores = vec![];
     let mut i = 0;
     while i < moves.len() {
-        moves_with_scores.push((0 as i32, moves[i]));
+        moves_with_scores.push((0, moves[i]));
         i += 1;
     }
     moves_with_scores
@@ -122,7 +122,7 @@ fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) 
             return *moves_with_scores
                 .iter()
                 .max_by_key(|(score, _)| {
-                    return score;
+                    score
                 })
                 .unwrap();
         }
@@ -130,7 +130,7 @@ fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) 
             return *moves_with_scores
                 .iter()
                 .min_by_key(|(score, _)| {
-                    return score;
+                    score
                 })
                 .unwrap();
         }
@@ -166,7 +166,7 @@ fn alpha_beta(
                 break;
             }
         }
-        return value;
+        value
     } else {
         let mut value = PLUS_INF;
         for (from, to) in board::get_all_moves_for_collor(&state) {
@@ -185,6 +185,6 @@ fn alpha_beta(
                 break;
             }
         }
-        return value;
+        value
     }
 }
