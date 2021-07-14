@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#![allow(dead_code)]
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
@@ -47,14 +47,14 @@ pub enum Move {
 }
 
 pub fn new_state() -> State {
-    return State {
+    State {
         color: Color::White,
         pieces: HashMap::<Position, Piece>::new(),
-    };
+    }
 }
 
 pub fn new_piece(rodzaj: Type, color: Color) -> Piece {
-    return Piece { color, rodzaj };
+    Piece { color, rodzaj }
 }
 
 /// w zaleznosci jaki pion stoi na danym miejscu ta funkcje generujemy
@@ -63,7 +63,7 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
         Type::Pawn => get_pawn_moves(&s, &p),
         Type::Rook => get_rook_moves(&s, &p),
     };
-    return all_possible_moves;
+    all_possible_moves
 }
 
 /// Zwracamy wszystkie ruchy wierzy z danego miejsca
@@ -214,13 +214,13 @@ fn get_piece_value(piece: &Piece) -> i32 {
 pub fn make_move(s: &State, from: Position, to: Position) -> State {
     let (x, y) = to;
     if x > 7 || y > 7 {
-        assert!(false);
+        unreachable!();
     }
     let mut new_state = s.clone();
     new_state.color = !new_state.color;
     let insert = new_state.pieces.remove(&from).unwrap();
     new_state.pieces.insert(to, insert);
-    return new_state;
+    new_state;
 }
 
 /// Wstawia na podana pozycje `piece`
@@ -250,6 +250,37 @@ pub fn show_state(s: &State) {
                 None => print!("_"),
             }
         }
-        println!("");
+        println!();
+    }
+}
+
+pub fn show_move(s: &State, from: Position, to: Position) {
+    println!("\n## Aktualny color: {:?} ## \n", s.color);
+    for y in 0..8 {
+        for x in 0..8 {
+            
+            if (x,y) == from || (x,y) == to {
+                print!("[");
+            } else {
+                print!(" ");
+            }
+            match s.pieces.get(&(x, y)) {
+                Some(piece) => match piece.color {
+                    Color::Black => match piece.rodzaj {
+                        Type::Pawn => print!("♙"),
+                        Type::Rook => print!("♖"),
+                    },
+                    Color::White => match piece.rodzaj {
+                        Type::Pawn => print!("♟︎"),
+                        Type::Rook => print!("♜"),
+                    },
+                },
+                None => print!("_"),
+            }
+            if (x,y) == from || (x,y) == to {
+                print!("]");
+            }
+        }
+        println!();
     }
 }
