@@ -30,7 +30,7 @@ pub struct Piece {
     pub rodzaj: Type,
 }
 
-pub type Position = (u8, u8);
+pub type Position = (i8, i8);
 pub type Board = HashMap<Position, Piece>;
 
 #[derive(Clone)]
@@ -79,7 +79,7 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     while new_x < 8 {
 
         let new_position = (new_x, y);
-        assert_ne!(new_position, position);
+        assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
             Move::Go => {
@@ -101,7 +101,7 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     while new_x >= 0 {
 
         let new_position = (new_x, y);
-        assert_ne!(new_position, position);
+        assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
             Move::Go => {
@@ -123,7 +123,7 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     while new_y < 8 {
 
         let new_position = (x, new_y);
-        assert_ne!(new_position, position);
+        assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
             Move::Go => {
@@ -145,7 +145,7 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     while new_y >= 0 {
 
         let new_position = (x, new_y);
-        assert_ne!(new_position, position);
+        assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
             Move::Go => {
