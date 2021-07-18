@@ -46,6 +46,7 @@ pub enum Move {
     Stop,
 }
 
+/// Constructor for `State`
 pub fn new_state() -> State {
     State {
         color: Color::White,
@@ -53,6 +54,7 @@ pub fn new_state() -> State {
     }
 }
 
+/// Constructor for `Piece`
 pub fn new_piece(rodzaj: Type, color: Color) -> Piece {
     Piece { color, rodzaj }
 }
@@ -65,8 +67,108 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
     }
 }
 
+
+fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
+    let mut possible_moves = vec![];
+
+    let x = position.0;
+    let y = position.1;
+
+    // Advancing moves in x direction
+    let mut new_x = x + 1;
+    while new_x < 8 {
+
+        let new_position = (new_x, y);
+        assert_ne!(new_position, position);
+
+        match check_rook_position(state, &new_position) {
+            Move::Go => {
+                possible_moves.push(new_position);
+            }
+            Move::Take => {
+                possible_moves.push(new_position);
+                break;
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+        new_x += 1;
+    }
+
+    // Backward moves in x direction
+    let mut new_x = x - 1;
+    while new_x >= 0 {
+
+        let new_position = (new_x, y);
+        assert_ne!(new_position, position);
+
+        match check_rook_position(state, &new_position) {
+            Move::Go => {
+                possible_moves.push(new_position);
+            }
+            Move::Take => {
+                possible_moves.push(new_position);
+                break;
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+        new_x -= 1;
+    }
+
+    // Advancing moves in y direction
+    let mut new_y = y + 1;
+    while new_y < 8 {
+
+        let new_position = (x, new_y);
+        assert_ne!(new_position, position);
+
+        match check_rook_position(state, &new_position) {
+            Move::Go => {
+                possible_moves.push(new_position);
+            }
+            Move::Take => {
+                possible_moves.push(new_position);
+                break;
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+        new_y += 1;
+    }
+
+    // Backward moves in y direction
+    let mut new_y = y - 1;
+    while new_y >= 0 {
+
+        let new_position = (x, new_y);
+        assert_ne!(new_position, position);
+
+        match check_rook_position(state, &new_position) {
+            Move::Go => {
+                possible_moves.push(new_position);
+            }
+            Move::Take => {
+                possible_moves.push(new_position);
+                break;
+            }
+            Move::Stop => {
+                break;
+            }
+        }
+        new_y -= 1;
+    }
+    
+
+    possible_moves
+}
+
+
 /// Zwracamy wszystkie ruchy wierzy z danego miejsca
-fn get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
+fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
     let mut res: Vec<Position> = vec![];
 
     for i in (p.0 + 1)..8 {
