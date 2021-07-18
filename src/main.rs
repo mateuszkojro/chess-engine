@@ -1,11 +1,15 @@
 mod board;
 
 use rayon::prelude::*;
+use std::process;
 
 static MINUS_INF: i32 = i32::MIN;
 static PLUS_INF: i32 = i32::MAX;
 
 fn __main() {
+
+    // Setup board
+
     let mut board = board::new_state();
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::White),
@@ -27,10 +31,15 @@ fn __main() {
         &board,
         (0, 1),
     );
+
+    // Lets get the evaluation
     let result = alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White);
     board::show_state(&board);
+    
+    // Lets make a simple move
     board = board::make_move(&board, (0, 0), (3, 3));
     board::show_state(&board);
+    
     println!("Alpha Beta: {}", result);
     pick_move(&board);
 }
@@ -100,10 +109,12 @@ fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) 
     let moves = board::get_all_moves_for_collor(state);
     let mut moves_with_scores = vec![];
     let mut i = 0;
+    
     while i < moves.len() {
         moves_with_scores.push((0, moves[i]));
         i += 1;
     }
+
     moves_with_scores
         //.par_iter_mut()
         .iter_mut()
@@ -117,21 +128,25 @@ fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) 
             );
         });
     println!("Moves: {:?}", moves_with_scores);
+    
+    if moves_with_scores.is_empty() {
+        println!("No possible moves - PAT");
+        std::process::exit(0);
+    }
+
     match state.color {
         board::Color::Black => {
             return *moves_with_scores
+                // .par_iter()
                 .iter()
-                .max_by_key(|(score, _)| {
-                    score
-                })
+                .max_by_key(|(score, _)| score)
                 .unwrap();
         }
         board::Color::White => {
             return *moves_with_scores
+                // .par_iter()
                 .iter()
-                .min_by_key(|(score, _)| {
-                    score
-                })
+                .min_by_key(|(score, _)| score)
                 .unwrap();
         }
     }
