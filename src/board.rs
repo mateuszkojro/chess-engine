@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Clone, Copy)]
 pub enum Type {
@@ -52,6 +53,16 @@ pub fn new_state() -> State {
         color: Color::White,
         pieces: HashMap::<Position, Piece>::new(),
     }
+}
+
+pub fn state_from_file(file_path : &str) -> State {
+    let mut ready_board = new_state();
+
+    let file = fs::read_to_string(file_path);
+
+    println!("{:?}", file);
+
+    ready_board
 }
 
 /// Constructor for `Piece`

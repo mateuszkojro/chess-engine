@@ -9,7 +9,6 @@ static PLUS_INF: i32 = i32::MAX;
 fn __main() {
 
     // Setup board
-
     let mut board = board::new_state();
     board = board::set(
         board::new_piece(board::Type::Rook, board::Color::White),
@@ -78,8 +77,13 @@ fn main() {
         (7, 0),
     );
     let n = 10;
-    board::show_state(&board);
+    // board::show_state(&board);
     // make n moves
+
+    // println!("Evauation for white{}", alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White));
+
+    let file = board::state_from_file("file.txt");
+
     for _ in 0..n {
         let (_, (from, to)) = pick_move(&board);
         board::show_move(&board, from, to);
@@ -105,7 +109,7 @@ fn min(a: i32, b: i32) -> i32 {
 }
 
 fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) {
-    let depth = 5;
+    let depth = 6;
     let moves = board::get_all_moves_for_collor(state);
     let mut moves_with_scores = vec![];
     let mut i = 0;
