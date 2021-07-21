@@ -74,7 +74,6 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
     if lines.len() != 64 {
         return None;
     }
- 
     for (i, line) in lines.into_iter().enumerate() {
         let position = iter_to_position(i);
         match line {
@@ -88,7 +87,7 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
                 ready_board = set(new_piece(Type::Pawn, Color::White), &ready_board, position);
             }
             "p" => {
-                ready_board = set(new_piece(Type::Pawn, Color::White), &ready_board, position);
+                ready_board = set(new_piece(Type::Pawn, Color::Black), &ready_board, position);
             }
             _ => {}
         }
