@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::convert::TryInto;
+
 use std::collections::HashMap;
 use std::fs;
 
@@ -55,14 +57,45 @@ pub fn new_state() -> State {
     }
 }
 
-pub fn state_from_file(file_path : &str) -> State {
+fn iter_to_position(i: i32) -> Position {
+    let x = (i % 8).try_into().unwrap(); // We can unwrap bcs $a % n < n$, $n < 2^8$
+    let y = (i / 8).try_into().unwrap(); // We can unwrap bcs max i should be 63 (becouse there is 64 fileds)
+    return (x, y);
+}
+
+// TODO: chanhge that to result
+pub fn state_from_file(file_path: &str) -> Option<State> {
     let mut ready_board = new_state();
 
-    let file = fs::read_to_string(file_path);
+    let file_content = fs::read_to_string(file_path).unwrap();
 
-    println!("{:?}", file);
+    let lines: Vec<&str> = file_content.split_ascii_whitespace().collect();
 
-    ready_board
+    if lines.len() != 64 {
+        return None;
+    }
+ 
+    for (i, line) in lines.into_iter().enumerate() {
+        let position = iter_to_position(i);
+        match line {
+            "R" => {
+                ready_board = set(new_piece(Type::Rook, Color::White), &ready_board, position);
+            }
+            "r" => {
+                ready_board = set(new_piece(Type::Rook, Color::Black), &ready_board, position);
+            }
+            "P" => {
+                ready_board = set(new_piece(Type::Pawn, Color::White), &ready_board, position);
+            }
+            "p" => {
+                ready_board = set(new_piece(Type::Pawn, Color::White), &ready_board, position);
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+
+    Some(ready_board)
 }
 
 /// Constructor for `Piece`
@@ -78,7 +111,6 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
     }
 }
 
-
 fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     let mut possible_moves = vec![];
 
@@ -88,7 +120,6 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     // Advancing moves in x direction
     let mut new_x = x + 1;
     while new_x < 8 {
-
         let new_position = (new_x, y);
         assert_ne!(new_position, *position);
 
@@ -110,7 +141,6 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     // Backward moves in x direction
     let mut new_x = x - 1;
     while new_x >= 0 {
-
         let new_position = (new_x, y);
         assert_ne!(new_position, *position);
 
@@ -132,7 +162,6 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     // Advancing moves in y direction
     let mut new_y = y + 1;
     while new_y < 8 {
-
         let new_position = (x, new_y);
         assert_ne!(new_position, *position);
 
@@ -154,7 +183,6 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
     // Backward moves in y direction
     let mut new_y = y - 1;
     while new_y >= 0 {
-
         let new_position = (x, new_y);
         assert_ne!(new_position, *position);
 
@@ -172,11 +200,9 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
         }
         new_y -= 1;
     }
-    
 
     possible_moves
 }
-
 
 /// Zwracamy wszystkie ruchy wierzy z danego miejsca
 fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
@@ -370,8 +396,7 @@ pub fn show_move(s: &State, from: Position, to: Position) {
     println!("\n## Aktualny color: {:?} ## \n", s.color);
     for y in 0..8 {
         for x in 0..8 {
-            
-            if (x,y) == from || (x,y) == to {
+            if (x, y) == from || (x, y) == to {
                 print!("[");
             } else {
                 print!(" ");
@@ -389,7 +414,7 @@ pub fn show_move(s: &State, from: Position, to: Position) {
                 },
                 None => print!("_"),
             }
-            if (x,y) == from || (x,y) == to {
+            if (x, y) == from || (x, y) == to {
                 print!("]");
             }
         }

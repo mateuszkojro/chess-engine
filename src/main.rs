@@ -84,12 +84,12 @@ fn main() {
 
     let file = board::state_from_file("file.txt");
 
-    for _ in 0..n {
-        let (_, (from, to)) = pick_move(&board);
-        board::show_move(&board, from, to);
-        board = board::make_move(&board, from, to);
-        //board::show_state(&board);
-    }
+    // for _ in 0..n {
+    //     let (_, (from, to)) = pick_move(&board);
+    //     board::show_move(&board, from, to);
+    //     board = board::make_move(&board, from, to);
+    //     //board::show_state(&board);
+    // }
 }
 
 fn max(a: i32, b: i32) -> i32 {
