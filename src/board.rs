@@ -35,6 +35,8 @@ pub struct Piece {
 
 pub type Position = (i8, i8);
 pub type Board = HashMap<Position, Piece>;
+pub type Move = (Position, Position);
+pub type Evaluation = i32;
 
 #[derive(Clone)]
 pub struct State {
@@ -43,7 +45,7 @@ pub struct State {
 }
 
 #[allow(dead_code)]
-pub enum Move {
+pub enum MoveType {
     Take,
     Go,
     Stop,
@@ -60,7 +62,7 @@ pub fn new_state() -> State {
 fn iter_to_position(i: usize) -> Position {
     let x = (i % 8).try_into().unwrap(); // We can unwrap bcs $a % n < n$, $n < 2^8$
     let y = (i / 8).try_into().unwrap(); // We can unwrap bcs max i should be 63 (becouse there is 64 fileds)
-    return (x, y);
+    (x, y)
 }
 
 // TODO: chanhge that to result
@@ -122,14 +124,14 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
         assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
-            Move::Go => {
+            MoveType::Go => {
                 possible_moves.push(new_position);
             }
-            Move::Take => {
+            MoveType::Take => {
                 possible_moves.push(new_position);
                 break;
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -143,14 +145,14 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
         assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
-            Move::Go => {
+            MoveType::Go => {
                 possible_moves.push(new_position);
             }
-            Move::Take => {
+            MoveType::Take => {
                 possible_moves.push(new_position);
                 break;
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -164,14 +166,14 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
         assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
-            Move::Go => {
+            MoveType::Go => {
                 possible_moves.push(new_position);
             }
-            Move::Take => {
+            MoveType::Take => {
                 possible_moves.push(new_position);
                 break;
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -185,14 +187,14 @@ fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
         assert_ne!(new_position, *position);
 
         match check_rook_position(state, &new_position) {
-            Move::Go => {
+            MoveType::Go => {
                 possible_moves.push(new_position);
             }
-            Move::Take => {
+            MoveType::Take => {
                 possible_moves.push(new_position);
                 break;
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -210,14 +212,14 @@ fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
         let new_pos = (i, p.1);
         assert!(new_pos != *p);
         match check_rook_position(s, &new_pos) {
-            Move::Take => {
+            MoveType::Take => {
                 res.push(new_pos);
                 break;
             }
-            Move::Go => {
+            MoveType::Go => {
                 res.push(new_pos);
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -227,14 +229,14 @@ fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
         let new_pos = ((p.0 - i), p.1);
         assert!(new_pos != *p);
         match check_rook_position(s, &new_pos) {
-            Move::Take => {
+            MoveType::Take => {
                 res.push(new_pos);
                 break;
             }
-            Move::Go => {
+            MoveType::Go => {
                 res.push(new_pos);
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -244,14 +246,14 @@ fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
         let new_pos = (p.0, i);
         assert!(new_pos != *p);
         match check_rook_position(s, &new_pos) {
-            Move::Take => {
+            MoveType::Take => {
                 res.push(new_pos);
                 break;
             }
-            Move::Go => {
+            MoveType::Go => {
                 res.push(new_pos);
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -261,14 +263,14 @@ fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
         let new_pos = (p.0, p.1 - i);
         assert!(new_pos != *p);
         match check_rook_position(s, &new_pos) {
-            Move::Take => {
+            MoveType::Take => {
                 res.push(new_pos);
                 break;
             }
-            Move::Go => {
+            MoveType::Go => {
                 res.push(new_pos);
             }
-            Move::Stop => {
+            MoveType::Stop => {
                 break;
             }
         }
@@ -277,7 +279,7 @@ fn old_get_rook_moves(s: &State, p: &Position) -> Vec<Position> {
     res
 }
 
-pub fn get_all_moves_for_collor(s: &State) -> Vec<(Position, Position)> {
+pub fn get_all_moves_for_collor(s: &State) -> Vec<Move> {
     let mut res: Vec<(Position, Position)> = vec![];
     for (position, piece) in s.pieces.iter() {
         // FIXME: tutaj robimy duzo prownan there must be a better way
@@ -310,13 +312,13 @@ fn get_pawn_moves(b: &State, p: &Position) -> Vec<Position> {
 }
 
 /// sprawdzamy czy pole jest puste czy stoi na nim nasz pion czy pion przeciwnika
-fn check_rook_position(s: &State, p: &Position) -> Move {
+fn check_rook_position(s: &State, p: &Position) -> MoveType {
     match s.pieces.get(&p) {
         Some(piece) => match piece.color == s.color {
-            true => Move::Stop,
-            false => Move::Take,
+            true => MoveType::Stop,
+            false => MoveType::Take,
         },
-        None => Move::Go,
+        None => MoveType::Go,
     }
 }
 
