@@ -91,7 +91,6 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
             }
             _ => {}
         }
-        i += 1;
     }
 
     Some(ready_board)
