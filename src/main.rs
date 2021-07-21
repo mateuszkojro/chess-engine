@@ -82,11 +82,11 @@ fn main() {
 
     // println!("Evauation for white{}", alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White));
 
-    let file = match board::state_from_file("file.txt") {
+    let file = match board::state_from_file("example_board.txt") {
         Some(val) => { val }
         None => { board::new_state() }
     };
-    
+
     board::show_state(&file);
 
     // for _ in 0..n {
