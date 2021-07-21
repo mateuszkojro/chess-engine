@@ -73,9 +73,12 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
 
     let lines: Vec<&str> = file_content.split_ascii_whitespace().collect();
 
+    // println!("{:?}, size: {:?}", lines, lines.len());
+
     if lines.len() != 64 {
         return None;
     }
+
     for (i, line) in lines.into_iter().enumerate() {
         let position = iter_to_position(i);
         match line {
