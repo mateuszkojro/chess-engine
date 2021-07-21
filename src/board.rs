@@ -57,7 +57,7 @@ pub fn new_state() -> State {
     }
 }
 
-fn iter_to_position(i: i32) -> Position {
+fn iter_to_position(i: usize) -> Position {
     let x = (i % 8).try_into().unwrap(); // We can unwrap bcs $a % n < n$, $n < 2^8$
     let y = (i / 8).try_into().unwrap(); // We can unwrap bcs max i should be 63 (becouse there is 64 fileds)
     return (x, y);
