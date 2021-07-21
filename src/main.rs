@@ -108,7 +108,7 @@ fn min(a: i32, b: i32) -> i32 {
     }
 }
 
-fn pick_move(state: &board::State) -> (i32, (board::Position, board::Position)) {
+fn pick_move(state: &board::State) -> (board::Evaluation, board::Move) {
     let depth = 6;
     let moves = board::get_all_moves_for_collor(state);
     let mut moves_with_scores = vec![];
@@ -162,7 +162,7 @@ fn alpha_beta(
     mut alpha: i32,
     mut beta: i32,
     max_player: board::Color,
-) -> i32 {
+) -> board::Evaluation {
     if depth == 0 {
         return board::get_evaluation(&state);
     }
