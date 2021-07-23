@@ -7,7 +7,6 @@ static MINUS_INF: i32 = i32::MIN;
 static PLUS_INF: i32 = i32::MAX;
 
 fn __main() {
-
     // Setup board
     let mut board = board::new_state();
     board = board::set(
@@ -34,11 +33,9 @@ fn __main() {
     // Lets get the evaluation
     let result = alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White);
     board::show_state(&board);
-    
     // Lets make a simple move
     board = board::make_move(&board, (0, 0), (3, 3));
     board::show_state(&board);
-    
     println!("Alpha Beta: {}", result);
     pick_move(&board);
 }
@@ -76,25 +73,28 @@ fn main() {
         &board,
         (7, 0),
     );
-    let n = 10;
+    let n = 16;
     // board::show_state(&board);
     // make n moves
 
     // println!("Evauation for white{}", alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White));
 
-    let file = match board::state_from_file("example_board.txt") {
-        Some(val) => { val }
-        None => { board::new_state() }
+    let mut file = match board::state_from_file("mat_in_one.txt") {
+        Ok(val) => val,
+        Err(e) => {
+            println!("Error while reading file: {:?}", e);
+            board::new_state()
+        }
     };
 
     board::show_state(&file);
 
-    // for _ in 0..n {
-    //     let (_, (from, to)) = pick_move(&board);
-    //     board::show_move(&board, from, to);
-    //     board = board::make_move(&board, from, to);
-    //     //board::show_state(&board);
-    // }
+    for _ in 0..n {
+        let (_, (from, to)) = pick_move(&file);
+        board::show_move(&file, from, to);
+        file = board::make_move(&file, from, to);
+        //board::show_state(&board);
+    }
 }
 
 fn max(a: i32, b: i32) -> i32 {
@@ -114,11 +114,10 @@ fn min(a: i32, b: i32) -> i32 {
 }
 
 fn pick_move(state: &board::State) -> (board::Evaluation, board::Move) {
-    let depth = 6;
+    let depth = 10;
     let moves = board::get_all_moves_for_collor(state);
     let mut moves_with_scores = vec![];
     let mut i = 0;
-    
     while i < moves.len() {
         moves_with_scores.push((0, moves[i]));
         i += 1;
@@ -137,7 +136,6 @@ fn pick_move(state: &board::State) -> (board::Evaluation, board::Move) {
             );
         });
     println!("Moves: {:?}", moves_with_scores);
-    
     if moves_with_scores.is_empty() {
         println!("No possible moves - PAT");
         std::process::exit(0);

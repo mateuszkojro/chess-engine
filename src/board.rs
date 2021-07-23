@@ -8,6 +8,7 @@ use std::fs;
 pub enum Type {
     Pawn,
     Rook,
+    King,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -66,7 +67,7 @@ fn iter_to_position(i: usize) -> Position {
 }
 
 // TODO: chanhge that to result
-pub fn state_from_file(file_path: &str) -> Option<State> {
+pub fn state_from_file(file_path: &str) -> Result<State, &str> {
     let mut ready_board = new_state();
 
     let file_content = fs::read_to_string(file_path).unwrap();
@@ -76,7 +77,7 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
     // println!("{:?}, size: {:?}", lines, lines.len());
 
     if lines.len() != 64 {
-        return None;
+        return Err("Bad file length");
     }
 
     for (i, line) in lines.into_iter().enumerate() {
@@ -94,11 +95,22 @@ pub fn state_from_file(file_path: &str) -> Option<State> {
             "p" => {
                 ready_board = set(new_piece(Type::Pawn, Color::Black), &ready_board, position);
             }
-            _ => {}
+            "K" => {
+                ready_board = set(new_piece(Type::King, Color::White), &ready_board, position);
+            }
+            "k" => {
+                ready_board = set(new_piece(Type::King, Color::Black), &ready_board, position);
+            }
+            "_" => {}
+
+            c => {
+                println!("Did not expect: {:?}", c);
+                return Err("Not expected char");
+            }
         }
     }
 
-    Some(ready_board)
+    Ok(ready_board)
 }
 
 /// Constructor for `Piece`
@@ -111,7 +123,37 @@ fn get_piece_moves(piece: &Piece, s: &State, p: &Position) -> Vec<Position> {
     match piece.rodzaj {
         Type::Pawn => get_pawn_moves(&s, &p),
         Type::Rook => get_rook_moves(&s, &p),
+        Type::King => get_king_moves(&s, &p),
     }
+}
+
+fn get_king_moves(state: &State, position: &Position) -> Vec<Position> {
+    let mut king_moves = vec![];
+
+    for x_iter in -1..1 {
+        for y_iter in -1..1 {
+            let new_x = position.0 - x_iter;
+            let new_y = position.1 - y_iter;
+
+            if !(0..=7).contains(&new_x) {
+                continue;
+            }
+            if !(0..=7).contains(&new_y) {
+                continue;
+            }
+            let new_position = (new_x, new_y);
+            match check_rook_position(&state, &new_position) {
+                MoveType::Go => {
+                    king_moves.push(new_position);
+                }
+                MoveType::Take => {
+                    king_moves.push(new_position);
+                }
+                MoveType::Stop => {}
+            }
+        }
+    }
+    king_moves
 }
 
 fn get_rook_moves(state: &State, position: &Position) -> Vec<Position> {
@@ -342,10 +384,12 @@ fn get_piece_value(piece: &Piece) -> i32 {
         Color::White => match piece.rodzaj {
             Type::Pawn => 10,
             Type::Rook => 50,
+            Type::King => 100_000,
         },
         Color::Black => match piece.rodzaj {
             Type::Pawn => -10,
             Type::Rook => -50,
+            Type::King => -100_000,
         },
     }
 }
@@ -382,10 +426,12 @@ pub fn show_state(s: &State) {
                     Color::Black => match piece.rodzaj {
                         Type::Pawn => print!("♙"),
                         Type::Rook => print!("♖"),
+                        Type::King => print!("♔"),
                     },
                     Color::White => match piece.rodzaj {
                         Type::Pawn => print!("♟︎"),
                         Type::Rook => print!("♜"),
+                        Type::King => print!("♚"),
                     },
                 },
                 None => print!("_"),
@@ -409,10 +455,12 @@ pub fn show_move(s: &State, from: Position, to: Position) {
                     Color::Black => match piece.rodzaj {
                         Type::Pawn => print!("♙"),
                         Type::Rook => print!("♖"),
+                        Type::King => print!("♔"),
                     },
                     Color::White => match piece.rodzaj {
                         Type::Pawn => print!("♟︎"),
                         Type::Rook => print!("♜"),
+                        Type::King => print!("♚"),
                     },
                 },
                 None => print!("_"),
