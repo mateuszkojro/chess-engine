@@ -1,212 +1,172 @@
-mod board;
+#![allow(unused)]
 
-use rayon::prelude::*;
-use std::process;
-
-static MINUS_INF: i32 = i32::MIN;
-static PLUS_INF: i32 = i32::MAX;
-
-fn __main() {
-    // Setup board
-    let mut board = board::new_state();
-    board = board::set(
-        board::new_piece(board::Type::Rook, board::Color::White),
-        &board,
-        (0, 0),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Pawn, board::Color::White),
-        &board,
-        (0, 2),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Pawn, board::Color::Black),
-        &board,
-        (7, 6),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Rook, board::Color::Black),
-        &board,
-        (0, 1),
-    );
-
-    // Lets get the evaluation
-    let result = alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White);
-    board::show_state(&board);
-    // Lets make a simple move
-    board = board::make_move(&board, (0, 0), (3, 3));
-    board::show_state(&board);
-    println!("Alpha Beta: {}", result);
-    pick_move(&board);
+#[derive(Copy, Clone, Hash, Debug, PartialEq)]
+enum Figure {
+    WhitePawn,
+    WhiteRook,
+    WhiteKing,
+    BlackPawn,
+    BlackRook,
+    BlackKing,
 }
 
-fn _main() {
-    let mut board = board::new_state();
-    board = board::set(
-        board::new_piece(board::Type::Rook, board::Color::White),
-        &board,
-        (0, 1),
-    );
-    let res = board::get_all_moves_for_collor(&board);
-    println!("Aval moves: {:?} count: {}", res, res.len());
+/// true - white, false - black
+type Color = bool;
+
+// TODO: This type could be changed but idk which is better
+// #[derive(Copy, Clone, Hash, Debug)]
+// enum Color {
+//     Black = -1,
+//     White = 1,
+// }
+
+// impl std::ops::Not for Color {
+//     fn not(&self) -> Color {
+//         Color {-(*self as isize)}
+//     }
+// }
+
+type MoveList = Vec<State>;
+
+fn pawn_moves(state: &State, position: Vec2) -> MoveList {
+    let result: MoveList = vec![];
+    println!("No moves for pawns");
+    result
+}
+fn rook_moves(state: &State, position: Vec2) -> MoveList {
+    let result: MoveList = vec![];
+    let mut new_x = position.x + 1;
+    while new_x < 8 {
+        let new_position = Vec2::new(new_x, position.y);
+        assert_ne!(new_position, position);
+
+        match state.get(new_position) {
+            Some(piece) => {}
+            None => {
+                new_x += 1;
+            }
+        }
+    }
+    result
+}
+fn king_moves(state: &State, position: Vec2) -> MoveList {
+    let p = position;
+    let range = (0..=7);
+
+    let mut possible_x = vec![p.x];
+    if range.contains(&(p.x + 1)) {
+        possible_x.push(p.x + 1);
+    }
+    if range.contains(&(p.x - 1)) {
+        possible_x.push(p.x - 1);
+    }
+
+    let mut possible_y = vec![p.y];
+    if range.contains(&(p.y + 1)) {
+        possible_y.push(p.y + 1);
+    }
+    if range.contains(&(p.y - 1)) {
+        possible_y.push(p.y - 1);
+    }
+    let mut result = vec![];
+
+    for x in possible_x {
+        for y in &possible_y {
+            if x != p.x && *y != p.y {
+                result.push(state.make_move(position, Vec2::new(x, *y)))
+            }
+        }
+    }
+
+    result
+}
+
+impl Figure {
+    fn value(&self) -> i32 {
+        match self {
+            Figure::WhitePawn => 1,
+            Figure::WhiteRook => 10,
+            Figure::WhiteKing => 1000,
+            Figure::BlackPawn => -1,
+            Figure::BlackRook => -10,
+            Figure::BlackKing => -1000,
+        }
+    }
+
+    // Should this be fastly copiable and bigger or smaller? who knows need to tes
+    fn moves(&self, current_state: State, position: Vec2) -> MoveList {
+        match self {
+            Figure::WhitePawn => pawn_moves(&current_state, position),
+            Figure::BlackPawn => pawn_moves(&current_state, position),
+            Figure::WhiteRook => rook_moves(&current_state, position),
+            Figure::BlackRook => rook_moves(&current_state, position),
+            Figure::WhiteKing => king_moves(&current_state, position),
+            Figure::BlackKing => king_moves(&current_state, position),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+// We could store addr and then we would calculate it only once
+struct Vec2 {
+    x: i32,
+    y: i32,
+}
+
+// Should we cache calculated adress?
+impl Vec2 {
+    fn new(x: i32, y: i32) -> Vec2 {
+        assert!(x < 8);
+        assert!(x >= 0);
+        assert!(y < 8);
+        assert!(y >= 0);
+        Vec2 { x, y }
+    }
+}
+
+#[derive(Copy, Clone, Hash, Debug)]
+struct State {
+    active_color_: Color,
+    board_: [Option<Figure>; 64],
+}
+fn translate(position: Vec2) -> usize {
+    8_usize * position.y as usize + position.x as usize
+}
+impl State {
+    fn empty() -> State {
+        State {
+            board_: [None; 64],
+            active_color_: true,
+        }
+    }
+
+    fn set(&mut self, position: Vec2, figure: Option<Figure>) {
+        //TODO: we should check in hash if evaluation was calculated
+        self.board_[translate(position)] = figure;
+    }
+
+    fn make_move(&self, from: Vec2, to: Vec2) -> State {
+        let mut new_state = *self;
+        new_state.active_color_ = !self.active_color_;
+        let fig = self.get(from);
+        assert_ne!(fig, None);
+        new_state.set(to, fig);
+        new_state.set(from, None);
+        new_state
+    }
+
+    // Not rly sure about that
+    fn evaluate(&self) -> i32 {
+        self.board_.iter().flatten().map(|x| x.value()).sum::<i32>()
+    }
+
+    fn get(&self, position: Vec2) -> Option<Figure> {
+        self.board_[translate(position)]
+    }
 }
 
 fn main() {
-    let mut board = board::new_state();
-    board = board::set(
-        board::new_piece(board::Type::Rook, board::Color::White),
-        &board,
-        (0, 0),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Pawn, board::Color::White),
-        &board,
-        (0, 1),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Pawn, board::Color::Black),
-        &board,
-        (7, 6),
-    );
-    board = board::set(
-        board::new_piece(board::Type::Rook, board::Color::Black),
-        &board,
-        (7, 0),
-    );
-    let n = 16;
-    // board::show_state(&board);
-    // make n moves
-
-    // println!("Evauation for white{}", alpha_beta(&board, 5, MINUS_INF, PLUS_INF, board::Color::White));
-
-    let mut file = match board::state_from_file("mat_in_one.txt") {
-        Ok(val) => val,
-        Err(e) => {
-            println!("Error while reading file: {:?}", e);
-            board::new_state()
-        }
-    };
-
-    board::show_state(&file);
-
-    for _ in 0..n {
-        let (_, (from, to)) = pick_move(&file);
-        board::show_move(&file, from, to);
-        file = board::make_move(&file, from, to);
-        //board::show_state(&board);
-    }
-}
-
-fn max(a: i32, b: i32) -> i32 {
-    if a > b {
-        a
-    } else {
-        b
-    }
-}
-
-fn min(a: i32, b: i32) -> i32 {
-    if a < b {
-        a
-    } else {
-        b
-    }
-}
-
-fn pick_move(state: &board::State) -> (board::Evaluation, board::Move) {
-    let depth = 10;
-    let moves = board::get_all_moves_for_collor(state);
-    let mut moves_with_scores = vec![];
-    let mut i = 0;
-    while i < moves.len() {
-        moves_with_scores.push((0, moves[i]));
-        i += 1;
-    }
-
-    moves_with_scores
-        //.par_iter_mut()
-        .iter_mut()
-        .for_each(|(score, (from, to))| {
-            *score = alpha_beta(
-                &board::make_move(state, *from, *to),
-                depth,
-                MINUS_INF,
-                PLUS_INF,
-                state.color,
-            );
-        });
-    println!("Moves: {:?}", moves_with_scores);
-    if moves_with_scores.is_empty() {
-        println!("No possible moves - PAT");
-        std::process::exit(0);
-    }
-
-    match state.color {
-        board::Color::Black => {
-            return *moves_with_scores
-                // .par_iter()
-                .iter()
-                .max_by_key(|(score, _)| score)
-                .unwrap();
-        }
-        board::Color::White => {
-            return *moves_with_scores
-                // .par_iter()
-                .iter()
-                .min_by_key(|(score, _)| score)
-                .unwrap();
-        }
-    }
-}
-
-fn alpha_beta(
-    state: &board::State,
-    depth: i8,
-    mut alpha: i32,
-    mut beta: i32,
-    max_player: board::Color,
-) -> board::Evaluation {
-    if depth == 0 {
-        return board::get_evaluation(&state);
-    }
-
-    if max_player == board::Color::White {
-        let mut value = MINUS_INF;
-        for (from, to) in board::get_all_moves_for_collor(&state) {
-            value = max(
-                value,
-                alpha_beta(
-                    &board::make_move(&state, from, to),
-                    depth - 1,
-                    alpha,
-                    beta,
-                    board::Color::Black,
-                ),
-            );
-            alpha = max(alpha, value);
-            if alpha >= beta {
-                break;
-            }
-        }
-        value
-    } else {
-        let mut value = PLUS_INF;
-        for (from, to) in board::get_all_moves_for_collor(&state) {
-            value = min(
-                value,
-                alpha_beta(
-                    &board::make_move(&state, from, to),
-                    depth - 1,
-                    alpha,
-                    beta,
-                    board::Color::White,
-                ),
-            );
-            beta = min(beta, value);
-            if beta <= alpha {
-                break;
-            }
-        }
-        value
-    }
+    let mut board = State::empty();
+    board.set(Vec2::new(1, 1), Some(Figure::WhiteKing));
+    println!("{:?}", board.evaluate())
 }
