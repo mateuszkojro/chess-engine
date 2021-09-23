@@ -106,7 +106,7 @@ impl Figure {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 // We could store addr and then we would calculate it only once
 struct Vec2 {
     x: i32,
@@ -121,6 +121,12 @@ impl Vec2 {
         assert!(y < 8);
         assert!(y >= 0);
         Vec2 { x, y }
+    }
+    fn from_iter(i: usize) -> Vec2 {
+        Vec2 {
+            x: i as i32,
+            y: i as i32,
+        }
     }
 }
 
@@ -160,6 +166,17 @@ impl State {
         self.board_.iter().flatten().map(|x| x.value()).sum::<i32>()
     }
 
+    // TODO: that does nothing
+    fn moves(&self) -> Vec<State> {
+        self.board_
+            .iter()
+            .flatten()
+            .enumerate()
+            .map(|(i, f)| f.moves(*self, Vec2::from_iter(i)))
+            .flatten()
+            .collect()
+    }
+
     fn get(&self, position: Vec2) -> Option<Figure> {
         self.board_[translate(position)]
     }
@@ -168,5 +185,5 @@ impl State {
 fn main() {
     let mut board = State::empty();
     board.set(Vec2::new(1, 1), Some(Figure::WhiteKing));
-    println!("{:?}", board.evaluate())
+    println!("{:?}", board.moves())
 }
